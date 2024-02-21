@@ -1,8 +1,10 @@
 gradio
 python-dotenv
+langchain-exa
 langchain-openai
 langchain
 langchainhub
 tiktoken
 faiss-cpu
 chromadb
+exa_py
