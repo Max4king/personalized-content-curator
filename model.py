@@ -32,11 +32,12 @@ def format_docs(docs):
         return "\n".join([f"Title: {doc.title}\nHighlights: {doc.highlights}" for doc in docs])
 
 class NewsAISummary:
-    # gpt-4-turbo-preview
+    # gpt-4-turbo-preview or gpt-3.5-turbo
     def __init__(self, llm_model="gpt-3.5-turbo", days_ago=7, exa_api_key=os.getenv('EXA_API_KEY')) -> None:
         self.title = ""
         self.interests = ""
         self.summary = ""
+        self.gen_image = ""
         self.llm_model=llm_model
         self.days_ago = days_ago
         self.user_question = USER_QUESTION_TEMPLATE.format(interests=self.interests)
@@ -113,11 +114,27 @@ class NewsAISummary:
         return self.title
 
     def generate_image(self):
-        gen_image = self.llm_client.images.generate(
+        image_prompt = self.llm_client.chat.completions.create(
+            model=self.llm_model,
+            messages=[
+                {"role": "system", "content": "Generate an prompt for an image based on the summary provided."},
+                {"role": "user", "content": self.title}
+            ],
+        ).choices[0].message.content
+
+        self.gen_image = self.llm_client.images.generate(
             model="dall-e-3",
-            prompt=self.title,
-            size="1024x1024",
+            prompt=image_prompt,
+            size="1792x1024",
             quality="standard",
             n=1,
         )
-        return gen_image.data[0].url
+        return self.gen_image.data[0].url
+
+    def save_summary(self):
+        filename = "".join(x for x in self.title if x.isalnum() or x in "._-")
+        with open("./archive_summary/" + filename + ".md", "w") as f:
+            f.write(self.summary)
+        from PIL import Image
+        image = Image.open(self.gen_image)
+        image.save("./archive_summary/" + filename + ".webp")

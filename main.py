@@ -30,7 +30,7 @@ tru_llm_recorder = TruBasicApp(ai_summary.generate_news_summary, app_id="Content
 
 with tab1:
     st.header("Generate Summary")
-    st.write("The structure of the input is 'What's the recent news/update in {interests} this week?' You can enter more than one interest separated by a comma. But it will become less detailed when the interest is not related.")
+    st.write("The structure of the input is 'What's the recent news/update in {interests} this week?'\nYou can enter more than one interest separated by a comma. But it will become less detailed when the interest is not related.")
     interests_input = st.text_area("Enter your interests", height=20, placeholder="Examples: AI, Machine Learning , LLM from google....")
     
     if st.button("Generate Summary"):
