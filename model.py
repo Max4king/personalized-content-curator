@@ -5,13 +5,12 @@ from datetime import datetime, timedelta
 import gradio as gr
 from openai import OpenAI
 from exa_py import Exa
-from trulens_eval import Tru
-from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
-from trulens_eval import Feedback, Select
-import numpy as np
+# from trulens_eval import Tru
+# from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
+# from trulens_eval import Feedback, Select
 
-tru = Tru()
-tru.reset_database()
+# tru = Tru()
+# tru.reset_database()
 # Load environment variables
 load_dotenv()
 
@@ -36,16 +35,24 @@ SYSTEM_MESSAGE_SUMMARY = """
 Summarize these points into a cohesive narrative that reflects the week's most newsworthy events and trends."
 """
 
+summary = ""
 user_question = ""
+
+
+
 
 def format_docs(docs):
         return "\n".join([f"Title: {doc.title}\nHighlights: {doc.highlights}" for doc in docs])
 
-# Define the Gradio function
+# class NewsAISummary:
+
+#     def __init__(self) -> None:
+#         self.feedback_function()
+
 def generate_news_summary(interests):
 
     if interests == "":
-         raise ValueError("Please enter your interests to generate a summary.")
+        raise ValueError("Please enter your interests to generate a summary.")
     model = MODEL
     days_ago = DAYS_AGO
     time_frame = (datetime.now() - timedelta(days=days_ago))
@@ -92,19 +99,10 @@ def generate_news_summary(interests):
 
     return summary
 
-def news_summary(interests):
-    summary = generate_news_summary(interests)
-    # Extract the title from the summary
+def format_title(summary):
     title = summary.split("\n")[-1].join("")
-    only_summary = summary.split("\n")[:-1].join("")
-    print("Title:", title)
-    print("Summary:", only_summary)
+    only_summary = "\n\n".join(summary.split("\n")[:-1])
     return title, only_summary
 
 def feedback_function():
     pass
-
-
-generate_news_summary("AI")
-
-feedback_function()
