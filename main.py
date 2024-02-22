@@ -43,6 +43,8 @@ with tab1:
                 tru_llm_recorder.app(ai_summary.user_question)
             # Display the title and summary in the placeholder
             # st.image(image_url,caption ='Generated Image')
+    if st.button("Save"):
+        tru_llm_recorder.save_summary()
     # Placeholder for the output
     output_placeholder = st.empty()
                 
