@@ -28,13 +28,13 @@ MODEL = "gpt-4-turbo-preview"
 SYSTEM_MESSAGE = "You are a helpful assistant that generates search queries based on user questions. Only generate one search query."
 USER_QUESTION_TEMPLATE = "What's the recent news in {interests} this week?"
 SYSTEM_MESSAGE_SUMMARY = """
-"Create a weekly news summary based on the following key highlights, and conclude with a single title that encapsulates the main themes of the week:
+"Create a weekly news summary based on the following key highlights:
 
 {highlights}
 
 Summarize these points into a cohesive narrative that reflects the week's most newsworthy events and trends."
 """
-
+SYSTEM_MESSAGE_TITLE = "conclude with a single title that encapsulates the main themes of the week's news provided."
 summary = ""
 user_question = ""
 
@@ -52,7 +52,7 @@ def format_docs(docs):
 def generate_news_summary(interests):
 
     if interests == "":
-        raise ValueError("Please enter your interests to generate a summary.")
+        return
     model = MODEL
     days_ago = DAYS_AGO
     time_frame = (datetime.now() - timedelta(days=days_ago))
@@ -99,10 +99,25 @@ def generate_news_summary(interests):
 
     return summary
 
-def format_title(summary):
-    title = summary.split("\n")[-1].join("")
-    only_summary = "\n\n".join(summary.split("\n")[:-1])
-    return title, only_summary
+def get_title(summary):
+    title = llm_client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_MESSAGE_TITLE},
+            {"role": "user", "content": summary}
+        ],
+    ).choices[0].message.content
+    return title
+
+def generate_image(title):
+    gen_image = llm_client.images.generate(
+        model="dall-e-3",
+        prompt=title,
+        size="1024x1024",
+        quality="standard",
+        n=1,
+    )
+    return gen_image.data[0].url
 
 def feedback_function():
     pass
