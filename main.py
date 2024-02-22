@@ -1,22 +1,21 @@
 import gradio as gr
+from model import news_summary
 
-def generate_content(interest, content_type, complexity):
-    # This is where you'd integrate your content generation logic
-    # For demonstration, we'll just return a simple string based on the inputs
-    return f"Generated content about {interest} as a {content_type} with {complexity} complexity."
+with gr.Blocks() as app:
+    gr.Markdown("# News Summary Generator")
+    with gr.Tabs():
+        with gr.TabItem("Summary"):
+            interests_input = gr.Textbox(label="Enter your interests")
+            title_output = gr.Textbox(label="Title", lines=1, placeholder="Summary Title")
+            summary_output = gr.Textbox(label="Summary", lines=10, placeholder="Text Summary")
+            # rating_output = gr.Slider(minimum=0, maximum=5, step=1, label="Rating from 0 to 5")
+            submit_button = gr.Button("Generate Summary")
+        
+    # When the button is clicked, process the input and set the output
+    submit_button.click(    
+        fn=news_summary,
+        inputs=interests_input,
+        outputs=[title_output, summary_output]
+    )
 
-# Define your Gradio interface
-iface = gr.Interface(fn=generate_content,
-                     inputs=["text", "dropdown", "slider"],
-                     outputs="text",
-                     description="Generate personalized content based on your preferences",
-                     examples=[["Technology", "Article", 3], ["Cooking", "Tutorial", 2]])
-
-# Input options
-iface.input_components[1].choices = ["Article", "Tutorial", "Summary"]  # Dropdown choices
-iface.input_components[2].minimum = 1  # Slider min value
-iface.input_components[2].maximum = 5  # Slider max value
-iface.input_components[2].step = 1  # Slider step
-
-# Launch the interface
-iface.launch()
+app.launch()
