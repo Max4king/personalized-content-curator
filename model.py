@@ -17,14 +17,8 @@ load_dotenv()
 # Initialize Exa and OpenAI clients
 exa_api_key = os.getenv('EXA_API_KEY')
 openai_api_key = os.getenv('OPENAI_API_KEY')
-if not exa_api_key or not openai_api_key:
-    raise ValueError("EXA_API_KEY and/or OPENAI_API_KEY environment variables not set!")
 
-exa = Exa(exa_api_key)
-llm_client = OpenAI()
 
-DAYS_AGO = 7
-MODEL = "gpt-4-turbo-preview"
 SYSTEM_MESSAGE = "You are a helpful assistant that generates search queries based on user questions. Only generate one search query."
 USER_QUESTION_TEMPLATE = "What's the recent news in {interests} this week?"
 SYSTEM_MESSAGE_SUMMARY = """
@@ -35,36 +29,50 @@ SYSTEM_MESSAGE_SUMMARY = """
 Summarize these points into a cohesive narrative that reflects the week's most newsworthy events and trends."
 """
 SYSTEM_MESSAGE_TITLE = "conclude with a single title that encapsulates the main themes of the week's news provided."
-summary = ""
-user_question = ""
-
-
-
 
 def format_docs(docs):
         return "\n".join([f"Title: {doc.title}\nHighlights: {doc.highlights}" for doc in docs])
 
-# class NewsAISummary:
+class NewsAISummary:
 
-#     def __init__(self) -> None:
-#         self.feedback_function()
+    def __init__(self, , days_ago=7) -> None:
+title = ""
+interests = ""
+summary = ""
+llm_model="gpt-4-turbo-preview"
+days_ago = days_ago
+user_question = USER_QUESTION_TEMPLATE.format(interests=self.interests)
 
-def generate_news_summary(interests):
+if not exa_api_key or not openai_api_key:
+    raise ValueError("EXA_API_KEY and/or OPENAI_API_KEY environment variables not set! Go to settings to set the API keys.")
+self.exa = Exa(exa_api_key)
+self.llm_client = OpenAI()
 
+    def set_api_keys(self, **kwarg):
+        if 'openai_api_key' in kwarg and kwarg['openai_api_key'] != "":
+            self.openai = OpenAI(kwarg['openai_api_key'])
+        if 'exa_api_key' in kwarg and kwarg['exa_api_key'] != "":
+            self.exa = Exa(kwarg['exa_api_key'])
+
+    def set_user_question(self, interests):
+        if interests == "":
+            return
+        self.interests = interests
+        self.user_question = USER_QUESTION_TEMPLATE.format(interests=self.interests)
+
+def generate_news_summary(self, interests):
+    """
+    Generate answer from context.
+    """
     if interests == "":
         return
-    model = MODEL
-    days_ago = DAYS_AGO
-    time_frame = (datetime.now() - timedelta(days=days_ago))
+    set_user_question(interests)
+    time_frame = (datetime.now() - timedelta(days=self.days_ago))
     date_cutoff = time_frame.strftime("%Y-%m-%d")
-    
-    # Construct user question
-    global user_question
-    user_question = f"What's the recent news in {interests} this week?"
-    
+            
     # Generate the search query using OpenAI
     completion = llm_client.chat.completions.create(
-        model=model,
+        model=llm_model,
         messages=[
             {"role": "system", "content": SYSTEM_MESSAGE},
             {"role": "user", "content": user_question},
@@ -88,7 +96,7 @@ def generate_news_summary(interests):
     # Generate the summary using OpenAI
     formatted_results = SYSTEM_MESSAGE_SUMMARY.format(highlights=highlights) 
     summary_response = llm_client.chat.completions.create(
-        model=model,
+        model=llm_model,
         messages=[
             {"role": "system", "content": SYSTEM_MESSAGE_SUMMARY},
             {"role": "user", "content": formatted_results}
@@ -101,7 +109,7 @@ def generate_news_summary(interests):
 
 def get_title(summary):
     title = llm_client.chat.completions.create(
-        model=MODEL,
+        model=llm_model,
         messages=[
             {"role": "system", "content": SYSTEM_MESSAGE_TITLE},
             {"role": "user", "content": summary}
@@ -118,6 +126,3 @@ def generate_image(title):
         n=1,
     )
     return gen_image.data[0].url
-
-def feedback_function():
-    pass
