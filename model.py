@@ -3,6 +3,7 @@ import os
 import json
 from datetime import datetime, timedelta
 from openai import OpenAI
+import openai
 from exa_py import Exa
 # from trulens_eval import Tru
 # from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
@@ -33,7 +34,7 @@ def format_docs(docs):
 
 class NewsAISummary:
     # gpt-4-turbo-preview or gpt-3.5-turbo
-    def __init__(self, llm_model="gpt-3.5-turbo", days_ago=7, exa_api_key=os.getenv('EXA_API_KEY')) -> None:
+    def __init__(self, llm_model="gpt-3.5-turbo", days_ago=7, exa_api_key=None, open_api_key=None) -> None:
         self.title = ""
         self.interests = ""
         self.summary = ""
@@ -42,6 +43,7 @@ class NewsAISummary:
         self.days_ago = days_ago
         self.user_question = USER_QUESTION_TEMPLATE.format(interests=self.interests)
         self.exa = Exa(exa_api_key)
+        openai.api_key = open_api_key
         self.llm_client = OpenAI()
 
     def set_api_keys(self, **kwarg):
