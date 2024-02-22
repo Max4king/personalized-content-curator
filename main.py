@@ -3,9 +3,10 @@ from model import NewsAISummary
 from trulens_eval import Tru
 from trulens_eval import Feedback
 from trulens_eval import Feedback, OpenAI as fOpenAI, Tru
+from trulens_eval import TruBasicApp
 
 tru = Tru()
-tru.reset_database()
+# tru.reset_database()
 
 # Define a relevance function from openai
 # Setting the page title and layout
@@ -18,32 +19,38 @@ st.title("Personalized Content Curator")
 tab1, setting = st.tabs(["Summary", "Setting"])
 
 
-from trulens_eval import TruBasicApp
 
 ai_summary = NewsAISummary()
+
+fopenai = fOpenAI()
+f_relevance = Feedback(fopenai.relevance).on_input_output()
+
+tru_llm_recorder = TruBasicApp(ai_summary.generate_news_summary, app_id="Content Curator", feedbacks=[f_relevance])
+
+
 with tab1:
     st.header("Generate Summary")
-    interests_input = st.text_area("Enter your interests", height=50)
+    st.write("The structure of the input is 'What's the recent news/update in {interests} this week?' You can enter more than one interest separated by a comma. But it will become less detailed when the interest is not related.")
+    interests_input = st.text_area("Enter your interests", height=20, placeholder="Examples: AI, Machine Learning , LLM from google....")
     
-    # Placeholder for the output
-    output_placeholder = st.empty()
     if st.button("Generate Summary"):
         with st.spinner('Processing...'):
             # Generate the summarys            
             summary = ai_summary.generate_news_summary(interests_input)
             title = ai_summary.get_title()
             image_url = ai_summary.generate_image()
+            with tru_llm_recorder as recording:
+                tru_llm_recorder.app(ai_summary.user_question)
             # Display the title and summary in the placeholder
             # st.image(image_url,caption ='Generated Image')
-            output_placeholder.markdown(f"# Title: {title}\n![Generated Image]({image_url})\n\n# Summary:\n{summary}")
+    # Placeholder for the output
+    output_placeholder = st.empty()
+                
+if 'summary' in locals():
+    output_placeholder.markdown(f"# {title}\n![Generated Image]({image_url})\n\n{summary}")
 
-fopenai = fOpenAI()
-f_relevance = Feedback(fopenai.relevance).on_input_output()
 
-tru_llm_recorder = TruBasicApp( ai_summary.generate_news_summary,app_id="Personalized Content Curator", Feedbacks=[f_relevance])
-# tru.get_leaderboard(app_ids=["Personalized Content Curator"])
-with tru_llm_recorder as recording:
-            tru_llm_recorder.app(ai_summary.user_question)
+
 
 with setting:
     st.header("Settings")
