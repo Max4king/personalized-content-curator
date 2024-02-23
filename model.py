@@ -128,7 +128,6 @@ class NewsAISummary:
             n=1,
         )
         self.image_url = gen_image.data[0].url
-        print("This is the image url: ", self.image_url)
         return gen_image.data[0].url
 
     # def save_summary(self):
