@@ -46,11 +46,11 @@ class NewsAISummary:
         openai.api_key = open_api_key
         self.llm_client = OpenAI()
 
-    def set_api_keys(self, **kwarg):
-        if 'openai_api_key' in kwarg and kwarg['openai_api_key'] != "":
-            self.openai = OpenAI(kwarg['openai_api_key'])
-        if 'exa_api_key' in kwarg and kwarg['exa_api_key'] != "":
-            self.exa = Exa(kwarg['exa_api_key'])
+    def set_api_keys(self, openai_api_key=None, exa_api_key=None):
+        if openai_api_key != "" or openai_api_key is not None:
+            self.openai = OpenAI(openai_api_key)
+        if exa_api_key is not None and exa_api_key != "":
+            self.exa = Exa(exa_api_key)
 
     def set_user_question(self, interests):
         if interests == "":
