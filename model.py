@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime, timedelta
@@ -12,10 +11,6 @@ from exa_py import Exa
 # tru = Tru()
 # tru.reset_database()
 # Load environment variables
-load_dotenv()
-
-# Initialize Exa and OpenAI clients
-openai_api_key = os.getenv('OPENAI_API_KEY')
 
 
 SYSTEM_MESSAGE = "You are a helpful assistant that generates search queries based on user questions. Only generate one search query."
@@ -25,7 +20,7 @@ SYSTEM_MESSAGE_SUMMARY = """
 
 {highlights}
 
-Summarize these points into a cohesive narrative that reflects the week's most newsworthy events and trends."
+Summarize these points into a cohesive narrative that reflects the week's most newsworthy events and trends. Make sure to be provide a clear and concise summary. It must be no longer than 500 words."
 """
 SYSTEM_MESSAGE_TITLE = "conclude with a single title that encapsulates the main themes of the week's news provided."
 
@@ -34,11 +29,11 @@ def format_docs(docs):
 
 class NewsAISummary:
     # gpt-4-turbo-preview or gpt-3.5-turbo
-    def __init__(self, llm_model="gpt-3.5-turbo", days_ago=7, exa_api_key=None, open_api_key=None) -> None:
+    def __init__(self, llm_model="gpt-4-turbo-preview", days_ago=7, exa_api_key=None, open_api_key=None) -> None:
         self.title = ""
         self.interests = ""
         self.summary = ""
-        self.gen_image = ""
+        self.image_url = ""
         self.llm_model=llm_model
         self.days_ago = days_ago
         self.user_question = USER_QUESTION_TEMPLATE.format(interests=self.interests)
@@ -48,7 +43,7 @@ class NewsAISummary:
 
     def set_api_keys(self, openai_api_key=None, exa_api_key=None):
         if openai_api_key != "" or openai_api_key is not None:
-            self.openai = OpenAI(openai_api_key)
+            openai.api_key = openai_api_key
         if exa_api_key is not None and exa_api_key != "":
             self.exa = Exa(exa_api_key)
 
@@ -120,23 +115,34 @@ class NewsAISummary:
             model=self.llm_model,
             messages=[
                 {"role": "system", "content": "Generate an prompt for an image based on the summary provided."},
-                {"role": "user", "content": self.title}
+                {"role": "user", "content": self.title},
             ],
+            max_tokens=100,
         ).choices[0].message.content
 
-        self.gen_image = self.llm_client.images.generate(
+        gen_image = self.llm_client.images.generate(
             model="dall-e-3",
             prompt=image_prompt,
-            size="1792x1024",
+            size="1024x1024",
             quality="standard",
             n=1,
         )
-        return self.gen_image.data[0].url
+        self.image_url = gen_image.data[0].url
+        print("This is the image url: ", self.image_url)
+        return gen_image.data[0].url
 
-    def save_summary(self):
-        filename = "".join(x for x in self.title if x.isalnum() or x in "._-")
-        with open("./archive_summary/" + filename + ".md", "w") as f:
-            f.write(self.summary)
-        from PIL import Image
-        image = Image.open(self.gen_image)
-        image.save("./archive_summary/" + filename + ".webp")
+    # def save_summary(self):
+    #     filename = "-".join(x for x in self.title if x.isalnum() or x in "._-")
+    #     with open("./archive_summary/" + filename + ".txt", "w") as f:
+    #         f.write(self.summary)
+    #     import requests
+    #     print("This is the url in the save_summary function: ", self.image_url)
+    #     response = requests.get(self.image_url)
+    #     if response.status_code == 200:
+    #         # Define the filename and path where you want to save the image
+    #         filename = "".join(x for x in self.title if x.isalnum() or x in "._-") + ".webp"
+    #         path = f"./archive_summary/{filename}"
+            
+    #         # Open a file in binary write mode and save the image data
+    #         with open(path, 'wb') as file:
+    #             file.write(response.content)

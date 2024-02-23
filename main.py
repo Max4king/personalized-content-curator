@@ -4,16 +4,25 @@ from trulens_eval import Tru
 from trulens_eval import Feedback
 from trulens_eval import Feedback, OpenAI as fOpenAI, Tru
 from trulens_eval import TruBasicApp
+from dotenv import load_dotenv
+load_dotenv()
+import os
+if os.getenv("OPENAI_API_KEY") is not None:
+    st.session_state["openai_api_key"] = os.getenv("OPENAI_API_KEY")
+if os.getenv("EXA_API_KEY") is not None:
+    st.session_state["exa_api_key"] = os.getenv("EXA_API_KEY")
 
+st.session_state['days_ago'] = 7
 tru = Tru()
 # tru.reset_database()
 
-def init_or_update_news_ai_summary(openai_api_key=None, exa_api_key=None):
-    if 'news_ai_summary' not in st.session_state or openai_api_key or exa_api_key:
+def init_or_update_news_ai_summary():
+    if 'news_ai_summary' not in st.session_state or 'openai_api_key' in st.session_state or 'exa_api_key' in st.session_state:
         # Initialize NewsAISummary with provided API keys or existing ones
         st.session_state.news_ai_summary = NewsAISummary(
-            open_api_key=openai_api_key or st.session_state.get('openai_api_key'),
-            exa_api_key=exa_api_key or st.session_state.get('exa_api_key')
+            days_ago= st.session_state.get('days_ago'),
+            open_api_key= st.session_state.get('openai_api_key'),
+            exa_api_key= st.session_state.get('exa_api_key'),
         )
 
 
@@ -36,23 +45,13 @@ fopenai = fOpenAI()
 f_relevance = Feedback(fopenai.relevance).on_input_output()
 
 tru_llm_recorder = TruBasicApp(ai_summary.generate_news_summary, app_id="Content Curator", feedbacks=[f_relevance])
-
-# def update_api_keys(openai_api_key=None, exa_api_key=None):
-#     if openai_api_key:
-#         ai_summary.set_api_keys(openai_api_key=openai_api_key)
-#     if exa_api_key:
-#         ai_summary.set_api_keys(exa_api_key=exa_api_key)
-
-#     # Update the instance in session_state
-#     st.session_state['news_ai_summary'] = ai_summary
-
-        
+    
 init_or_update_news_ai_summary()
 
 
 with tab1:
     st.header("Generate Summary")
-    st.write("The structure of the input is 'What's the recent news/update in {interests} this week?'\nYou can enter more than one interest separated by a comma. But it will become less detailed when the interest is not related.")
+    st.write("The structure of the input is 'What's the recent news/update in {interests} this week?'\nYou can enter more than one interest separated by a comma. But it will become less detailed when the interest is not related to each other.")
     if 'news_ai_summary' in st.session_state:
 
         # Add a warning if the api keys are not set
@@ -69,11 +68,13 @@ with tab1:
                 image_url = ai_summary.generate_image()
                 with tru_llm_recorder as recording:
                         tru_llm_recorder.app(ai_summary.user_question)
-                st.markdown(f"# {title}\n![Generated Image]({image_url})\n\n{summary}")
+                st.markdown(f"# {title}\n")
+                st.image(image_url, use_column_width=True)
+                st.write(summary)
 
-        if st.button("Save Summary"):
-            ai_summary.save_summary()
-            st.success("Summary saved.")
+        # if st.button("Save Summary"):
+        #     ai_summary.save_summary()
+        #     st.success("Summary saved.")
     else:
         st.warning("Please configure your API keys in the Settings tab.")
 
@@ -81,14 +82,15 @@ with setting:
     st.header("Settings")
     openai_api_key = st.text_input("OpenAI API Key", key="openai_key")
     exa_api_key = st.text_input("Exa API Key", key="exa_key")
-
+    days_ago = st.number_input("Days ago", min_value=1, max_value=30, value=7)
     if st.button("Save API Keys"):
         # Save the API keys in session_state
         st.session_state['openai_api_key'] = openai_api_key
         st.session_state['exa_api_key'] = exa_api_key
+        st.session_state['days_ago'] = days_ago
         # Initialize or update the NewsAISummary instance with new API keys
-        init_or_update_news_ai_summary(openai_api_key, exa_api_key)
-        st.session_state.news_ai_summary.set_api_keys(openai_api_key=openai_api_key, exa_api_key=exa_api_key)
+        init_or_update_news_ai_summary()
+        st.session_state.news_ai_summary.set_api_keys()
         st.success("API keys updated and saved.")
         st.rerun()
 
