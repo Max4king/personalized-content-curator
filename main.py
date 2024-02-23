@@ -12,8 +12,13 @@ if os.getenv("OPENAI_API_KEY") is not None:
 if os.getenv("EXA_API_KEY") is not None:
     st.session_state["exa_api_key"] = os.getenv("EXA_API_KEY")
 
-st.session_state['openai_api_key'] = st.secrets["OPENAI_API_KEY"]
-st.session_state['exa_api_key'] = st.secrets["EXA_API_KEY"]
+try:
+    st.session_state['openai_api_key'] = st.secrets["OPENAI_API_KEY"]
+    st.session_state['exa_api_key'] = st.secrets["EXA_API_KEY"]
+except Exception as e:
+    print("No secrets keys found")
+
+
 st.session_state['days_ago'] = 7
 tru = Tru()
 # tru.reset_database()
