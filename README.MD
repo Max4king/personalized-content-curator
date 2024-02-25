@@ -4,7 +4,7 @@ This project is made for the hackathon. Trulens is used here to analyse for the 
 
 This project is designed as a handy tool for users to stay informed about the latest developments in specific topics of interest. It's not intended to substitute for in-depth news articles or comprehensive research. Instead, it's perfect for anyone who feels overwhelmed by the rapid pace of updates and wants a concise way to stay in the know.
 
-[DEMO](./demo-screenshot.png)
+<img src="./demo-screenshot.png">
 
 ## How to use? 
 Simply type in your interest like "AI" for example. Then this click generate and wait for the output to be generated. The application will display the title, complementary image and summary of the past week.
